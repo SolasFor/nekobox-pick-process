@@ -1,0 +1,208 @@
+
+
+#include "nekobox/dataStore/ConfigItem.hpp"
+
+
+#pragma once
+
+#include "AbstractBean.hpp"
+#include "Preset.hpp"
+
+namespace Configs {
+
+    INIT_ENUM(QUIC)
+        ADD_ENUM_LIST(Preset::SingBox::QUICCongestionControlAlgorithm, 1);
+    STOP_ENUM
+    
+    INIT_ENUM(Network)
+        ADD_ENUM_LIST(Preset::SingBox::Network, 1);
+    STOP_ENUM
+
+    INIT_ENUM(ObfsMode)
+        ADD_ENUM_LIST(Preset::SingBox::ObfsMode, 0);
+    STOP_ENUM
+
+    INIT_ENUM(VmessPacketEncodings)
+        ADD_ENUM_LIST(Preset::SingBox::VmessPacketEncodings, 0);
+    STOP_ENUM
+
+    INIT_ENUM(V2RAYTransports)
+        ADD_ENUM_LIST(Preset::SingBox::V2RAYTransports, 0);
+    STOP_ENUM
+
+    class KCPExtra: public JsonStore {
+    public: 
+        DECLARE_STORE_TYPE(NoSave)
+        int mtu = -1;
+        int tti = -1;
+        int uplinkcapacity = -1;
+        int downlinkcapacity = -1;
+        bool congestion = false;
+        int readbuffersize = -1;
+        int writebuffersize = -1;
+        QString headertype = "";
+        QString seed = "";
+        KCPExtra(){};
+
+        NEW_MAP
+            ADD_MAP("mtu", mtu, int);
+            ADD_MAP("tti", tti, int);
+            ADD_MAP("uplinkcapacity", uplinkcapacity, int);
+            ADD_MAP("downlinkcapacity", downlinkcapacity, int);
+            ADD_MAP("congestion", congestion, bool);
+            ADD_MAP("readbuffersize", readbuffersize, int);
+            ADD_MAP("writebuffersize", writebuffersize, int);
+            ADD_MAP("headertype", headertype, string);
+            ADD_MAP("seed", seed, string);
+        STOP_MAP
+    };
+
+    class V2rayStreamSettings : public JsonStore {
+    public:
+
+
+        DECLARE_STORE_TYPE(NoSave)
+        QString ech_config = "";
+        bool enable_ech = false;
+        QString query_server_name = "";
+
+        std::shared_ptr<V2RAYTransportsEnum> network = std::make_shared<V2RAYTransportsEnum>("tcp");
+        QString security = "";
+        std::shared_ptr<VmessPacketEncodingsEnum> packet_encoding = std::make_shared<VmessPacketEncodingsEnum>(0);
+
+        QString path = "";
+        QString host = "";
+        QString method = "";
+        QString headers = "";
+        QString header_type = "";
+
+        QString sni = "";
+        QString alpn = "";
+        QString certificate = "";
+        QString utlsFingerprint = "";
+        // Xray share-link fields; retain them through editing and subscription updates.
+        QString tls_cipher_suites = "";
+        QString tls_pinned_peer_cert_sha256 = "";
+        QString tls_verify_peer_cert_by_name = "";
+        QString xray_ech_config = "";
+        bool enable_tls_fragment = false;
+        QString tls_fragment_fallback_delay;
+        bool enable_tls_record_fragment = false;
+        bool allow_insecure = false;
+        // ws early data
+        QString ws_early_data_name = "";
+        int ws_early_data_length = 0;
+        // xhttp
+        QString xhttp_mode = "auto";
+        QString xhttp_extra = "";
+        std::shared_ptr<KCPExtra> kcp_extra = std::make_shared<KCPExtra>();
+        // reality
+        QString reality_pbk = "";
+        QString reality_sid = "";
+        QString reality_spx = "";
+        QString reality_pqv = "";
+                
+        V2rayStreamSettings() : JsonStore() {
+        }
+        NEW_MAP
+            ADD_MAP("net", network, string);
+            ADD_MAP("sec", security, string);
+            ADD_MAP("ech_config", ech_config, string);
+            ADD_MAP("enable_ech", enable_ech, boolean);
+            ADD_MAP("query_server_name", query_server_name, string);
+            ADD_MAP("pac_enc", packet_encoding, string);
+            ADD_MAP("path", path, string);
+            ADD_MAP("host", host, string);
+            ADD_MAP("sni", sni, string);
+            ADD_MAP("alpn", alpn, string);
+            ADD_MAP("cert", certificate, string);
+            ADD_MAP("insecure", allow_insecure, boolean);
+            ADD_MAP("headers", headers, string);
+            ADD_MAP("h_type", header_type, string);
+            ADD_MAP("method", method, string);
+            ADD_MAP("ed_name", ws_early_data_name, string);
+            ADD_MAP("ed_len", ws_early_data_length, integer);
+            ADD_MAP("xhttp_mode", xhttp_mode, string);
+            ADD_MAP("xhttp_extra", xhttp_extra, string);
+            ADD_MAP("utls", utlsFingerprint, string);
+            ADD_MAP("tls_cipher_suites", tls_cipher_suites, string);
+            ADD_MAP("tls_pinned_peer_cert_sha256", tls_pinned_peer_cert_sha256, string);
+            ADD_MAP("tls_verify_peer_cert_by_name", tls_verify_peer_cert_by_name, string);
+            ADD_MAP("xray_ech_config", xray_ech_config, string);
+            ADD_MAP("tls_frag", enable_tls_fragment, boolean);
+            ADD_MAP("tls_frag_fall_delay", tls_fragment_fallback_delay, string);
+            ADD_MAP("tls_record_frag", enable_tls_record_fragment, boolean);
+            ADD_MAP("pbk", reality_pbk, string);
+            ADD_MAP("sid", reality_sid, string);
+            ADD_MAP("spx", reality_spx, string);
+            ADD_MAP("pqv", reality_pqv, string);
+        STOP_MAP
+
+        void BuildStreamSettingsSingBox(QJsonObject *outbound);
+
+        QMap<QString, QString> GetHeaderPairs(bool* ok) const {
+            bool inQuote = false;
+            QString curr;
+            QStringList list;
+            for (const auto &ch: headers) {
+                if (inQuote) {
+                    if (ch == '"') {
+                        inQuote = false;
+                        list << curr;
+                        curr = "";
+                        continue;
+                    } else {
+                        curr += ch;
+                        continue;
+                    }
+                }
+                if (ch == '"') {
+                    inQuote = true;
+                    continue;
+                }
+                if (ch == ' ') {
+                    if (!curr.isEmpty()) {
+                        list << curr;
+                        curr = "";
+                    }
+                    continue;
+                }
+                if (ch == '=') {
+                    if (!curr.isEmpty()) {
+                        list << curr;
+                        curr = "";
+                    }
+                    continue;
+                }
+                curr+=ch;
+            }
+            if (!curr.isEmpty()) list<<curr;
+
+            if (list.size()%2 == 1) {
+                *ok = false;
+                return {};
+            }
+            QMap<QString,QString> res;
+            for (int i = 0; i < list.size(); i+=2) {
+                res[list[i]] = list[i + 1];
+            }
+            *ok = true;
+            return res;
+        }
+    };
+
+    inline const V2rayStreamSettings *GetStreamSettingsConst(const AbstractBean *bean) {
+        if (bean == nullptr) return nullptr;
+        auto stream_item = bean->_get_const("stream");
+        if (stream_item != nullptr) {
+            auto stream_store = *(JsonStore **) stream_item->getPtr((JsonStore*)bean);
+            auto stream = (Configs::V2rayStreamSettings *) stream_store;
+            return stream;
+        }
+        return nullptr;
+    }
+
+    inline V2rayStreamSettings *GetStreamSettings(AbstractBean *bean) {
+        return (V2rayStreamSettings*) GetStreamSettingsConst(bean);
+    }
+} // namespace Configs
