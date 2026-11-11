@@ -434,7 +434,7 @@ jobs:
           arch: win64_msvc2022_64
           setup-python: true
           cache: true
-          modules: qtcharts qttools
+          modules: qtcharts
           cache-key-prefix: QtCache-${{ matrix.platform }}-${{ matrix.target }}
 
       - name: Install Qt
