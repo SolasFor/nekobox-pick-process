@@ -368,7 +368,13 @@ jobs:
 
       - name: Setup Ninja
         if: (matrix.allow == true || matrix.allow == 'true')
-        uses: qr243vbi/setup-ninja@master
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          curl.exe -fLso ninja-win.zip https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip
+          Expand-Archive ninja-win.zip -DestinationPath ninja_bin -Force
+          (Get-Location).Path + "\ninja_bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          & ".\ninja_bin\ninja.exe" --version
 
       - name: Install NSIS
         if: (matrix.allow == true || matrix.allow == 'true') && matrix.target != 'arm64'
@@ -421,10 +427,15 @@ jobs:
           choco: zip curl jq
 
       - name: Install Customized Qt
-        if: (matrix.allow == true || matrix.allow == 'true') && matrix.target != 'arm64'
-        uses: qr243vbi/qt6windows7@main
+        if: (matrix.allow == true || matrix.allow == 'true') && matrix.target == 'x86_64'
+        uses: jurplel/install-qt-action@v4.3.1
         with:
-          version: 6.10.0_${{ matrix.target }}
+          version: 6.10.0
+          arch: win64_msvc2022_64
+          setup-python: true
+          cache: true
+          modules: qtcharts qttools
+          cache-key-prefix: QtCache-${{ matrix.platform }}-${{ matrix.target }}
 
       - name: Install Qt
         if: (matrix.allow == true || matrix.allow == 'true') && matrix.target == 'arm64'
