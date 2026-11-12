@@ -1289,6 +1289,7 @@ static QList<std::shared_ptr<RouteRule>> BuildQuickRouteRules() {
   QMap<int, QList<QString>> processPathRegexes;
   QMap<int, QList<QString>> processNames;
   QMap<int, QList<QString>> domainKeywords;
+  QMap<int, QList<QString>> domainSuffixes;
 
   // A route whose profile got deleted is dropped instead of failing the whole build.
   auto accept = [&outboundOrder](const QString &match, int outbound) {
@@ -1354,7 +1355,14 @@ static QList<std::shared_ptr<RouteRule>> BuildQuickRouteRules() {
     if (!accept(value, outbound)) {
       continue;
     }
-    domainKeywords[outbound] << value;
+    const auto method =
+        i < quick->domain_method.size() ? quick->domain_method[i] : QString("keyword");
+    if (method == "suffix") {
+      // domain_suffix also matches every subdomain of the listed domain.
+      domainSuffixes[outbound] << value;
+    } else {
+      domainKeywords[outbound] << value;
+    }
   }
 
   auto makeRule = [](const QString &name, int outbound) {
@@ -1383,6 +1391,11 @@ static QList<std::shared_ptr<RouteRule>> BuildQuickRouteRules() {
     }
   }
   for (const auto &outbound : outboundOrder) {
+    if (domainSuffixes.contains(outbound)) {
+      auto rule = makeRule("Quick routes: domains (suffix)", outbound);
+      rule->domain_suffix = domainSuffixes[outbound];
+      rules << rule;
+    }
     if (domainKeywords.contains(outbound)) {
       auto rule = makeRule("Quick routes: domains", outbound);
       rule->domain_keyword = domainKeywords[outbound];

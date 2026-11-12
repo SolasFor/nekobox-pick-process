@@ -413,6 +413,7 @@ QByteArray hash = QCryptographicHash::hash(
         ADD_MAP("process_outbound", process_outbound, intList);
         ADD_MAP("domain_match", domain_match, stringlist);
         ADD_MAP("domain_outbound", domain_outbound, intList);
+        ADD_MAP("domain_method", domain_method, stringlist);
     STOP_MAP
 
     void QuickRoutes::normalize() {
@@ -422,6 +423,8 @@ QByteArray hash = QCryptographicHash::hash(
         };
         fit(process_match, process_outbound);
         fit(domain_match, domain_outbound);
+        while (domain_method.size() < domain_match.size()) domain_method.append("keyword");
+        while (domain_method.size() > domain_match.size()) domain_method.removeLast();
     }
 
     DECL_MAP(DataStore)

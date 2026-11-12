@@ -34,7 +34,7 @@ QuickRoutesWidget::QuickRoutesWidget(QWidget *parent) : QWidget(parent) {
     auto *splitter = new QSplitter(Qt::Vertical, this);
     splitter->setChildrenCollapsible(false);
     splitter->addWidget(makeSection(tr("Applications"), &processTable, tr("Application"), true));
-    splitter->addWidget(makeSection(tr("Domains"), &domainTable, tr("Domain"), false));
+    splitter->addWidget(makeSection(tr("Domains"), &domainTable, tr("Domain"), false, true));
     splitter->setStretchFactor(0, 1);
     splitter->setStretchFactor(1, 1);
     root->addWidget(splitter, 1);
@@ -55,7 +55,8 @@ QuickRoutesWidget::QuickRoutesWidget(QWidget *parent) : QWidget(parent) {
 }
 
 QWidget *QuickRoutesWidget::makeSection(const QString &title, QTableWidget **table,
-                                        const QString &firstHeader, bool processSection) {
+                                        const QString &firstHeader, bool processSection,
+                                        bool domainSection) {
     auto *section = new QWidget();
     auto *layout = new QVBoxLayout(section);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -85,14 +86,23 @@ QWidget *QuickRoutesWidget::makeSection(const QString &title, QTableWidget **tab
     header->addWidget(removeButton);
     layout->addLayout(header);
 
-    auto *created = new QTableWidget(0, 2, section);
-    setupTable(created, firstHeader);
+    auto *created = new QTableWidget(0, domainSection ? 3 : 2, section);
+    if (domainSection) {
+        setupTable(created, {firstHeader, tr("Method"), tr("Outbound")}, 2);
+    } else {
+        setupTable(created, {firstHeader, tr("Outbound")}, 1);
+    }
     layout->addWidget(created, 1);
     *table = created;
 
     connect(addButton, &QPushButton::clicked, this, [this, processSection] {
         if (processSection) {
-            addProcessRow(browseForExecutable(), Configs::proxyID);
+            // Cancelling the file dialog must not leave a blank row behind.
+            const auto path = browseForExecutable();
+            if (path.isEmpty()) {
+                return;
+            }
+            addProcessRow(path, Configs::proxyID);
         } else {
             addDomainRow({}, Configs::proxyID);
         }
@@ -108,13 +118,18 @@ void QuickRoutesWidget::showEvent(QShowEvent *event) {
     refreshOutboundCombos();
 }
 
-void QuickRoutesWidget::setupTable(QTableWidget *table, const QString &firstHeader) {
-    table->setHorizontalHeaderLabels({firstHeader, tr("Outbound")});
+void QuickRoutesWidget::setupTable(QTableWidget *table, const QStringList &headers,
+                                   int outboundColumn) {
+    table->setHorizontalHeaderLabels(headers);
     table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Interactive);
+    if (headers.size() > 2) {
+        table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Interactive);
+        table->setColumnWidth(1, 150);
+    }
+    table->horizontalHeader()->setSectionResizeMode(outboundColumn, QHeaderView::Interactive);
     table->horizontalHeader()->setHighlightSections(false);
     table->verticalHeader()->setVisible(false);
-    table->setColumnWidth(1, 200);
+    table->setColumnWidth(outboundColumn, 200);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSelectionMode(QAbstractItemView::ExtendedSelection);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -231,8 +246,20 @@ QString QuickRoutesWidget::processPathAt(int row) const {
     return edit != nullptr ? edit->text().trimmed() : QString();
 }
 
-int QuickRoutesWidget::outboundAt(QTableWidget *table, int row) {
-    auto *combo = qobject_cast<QComboBox *>(table->cellWidget(row, 1));
+QComboBox *QuickRoutesWidget::makeMethodCombo(const QString &method) const {
+    auto *combo = new QComboBox();
+    combo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    combo->addItem(tr("keyword"), QStringLiteral("keyword"));
+    combo->addItem(tr("suffix"), QStringLiteral("suffix"));
+    combo->setItemData(0, tr("Matches any domain that contains this text"), Qt::ToolTipRole);
+    combo->setItemData(1, tr("Matches this domain and all of its subdomains"), Qt::ToolTipRole);
+    const int index = combo->findData(method);
+    combo->setCurrentIndex(index >= 0 ? index : 0);
+    return combo;
+}
+
+int QuickRoutesWidget::outboundAt(QTableWidget *table, int row, int outboundColumn) {
+    auto *combo = qobject_cast<QComboBox *>(table->cellWidget(row, outboundColumn));
     if (combo == nullptr) {
         return Configs::proxyID;
     }
@@ -246,13 +273,29 @@ void QuickRoutesWidget::addProcessRow(const QString &path, int outboundId) {
     processTable->setCellWidget(row, 1, makeOutboundCombo(outboundId));
 }
 
-void QuickRoutesWidget::addDomainRow(const QString &domain, int outboundId) {
+void QuickRoutesWidget::addDomainRow(const QString &domain, int outboundId,
+                                     const QString &method) {
     const int row = domainTable->rowCount();
     domainTable->insertRow(row);
+
     auto *edit = new QLineEdit(domain);
     edit->setPlaceholderText(tr("Domain keyword, for example: example.com"));
+    auto *methodCombo = makeMethodCombo(method.isEmpty() ? QStringLiteral("keyword") : method);
+
+    auto updatePlaceholder = [edit](QComboBox *combo) {
+        if (combo->currentData().toString() == "suffix") {
+            edit->setPlaceholderText(tr("Domain suffix, for example: google.com"));
+        } else {
+            edit->setPlaceholderText(tr("Domain keyword, for example: example.com"));
+        }
+    };
+    connect(methodCombo, &QComboBox::currentIndexChanged, edit,
+            [updatePlaceholder, methodCombo] { updatePlaceholder(methodCombo); });
+    updatePlaceholder(methodCombo);
+
     domainTable->setCellWidget(row, 0, edit);
-    domainTable->setCellWidget(row, 1, makeOutboundCombo(outboundId));
+    domainTable->setCellWidget(row, 1, methodCombo);
+    domainTable->setCellWidget(row, 2, makeOutboundCombo(outboundId));
 }
 
 void QuickRoutesWidget::removeSelectedRows(QTableWidget *table) {
@@ -266,9 +309,9 @@ void QuickRoutesWidget::removeSelectedRows(QTableWidget *table) {
 
 void QuickRoutesWidget::refreshOutboundCombos() {
     const auto choices = collectOutbounds();
-    auto updateTable = [&](QTableWidget *table) {
+    auto updateTable = [&](QTableWidget *table, int outboundColumn) {
         for (int row = 0; row < table->rowCount(); row++) {
-            auto *combo = qobject_cast<QComboBox *>(table->cellWidget(row, 1));
+            auto *combo = qobject_cast<QComboBox *>(table->cellWidget(row, outboundColumn));
             if (combo == nullptr) {
                 continue;
             }
@@ -277,8 +320,8 @@ void QuickRoutesWidget::refreshOutboundCombos() {
             fillOutboundCombo(combo, choices, selected);
         }
     };
-    updateTable(processTable);
-    updateTable(domainTable);
+    updateTable(processTable, 1);
+    updateTable(domainTable, 2);
 }
 
 void QuickRoutesWidget::loadFromStore() {
@@ -294,7 +337,8 @@ void QuickRoutesWidget::loadFromStore() {
         addProcessRow(routes->process_match[i], routes->process_outbound[i]);
     }
     for (int i = 0; i < routes->domain_match.size(); i++) {
-        addDomainRow(routes->domain_match[i], routes->domain_outbound[i]);
+        addDomainRow(routes->domain_match[i], routes->domain_outbound[i],
+                     i < routes->domain_method.size() ? routes->domain_method[i] : QString());
     }
 }
 
@@ -308,6 +352,7 @@ void QuickRoutesWidget::saveToStore() {
     routes->process_outbound.clear();
     routes->domain_match.clear();
     routes->domain_outbound.clear();
+    routes->domain_method.clear();
 
     for (int row = 0; row < processTable->rowCount(); row++) {
         const auto path = processPathAt(row);
@@ -315,7 +360,7 @@ void QuickRoutesWidget::saveToStore() {
             continue;
         }
         routes->process_match.append(path);
-        routes->process_outbound.append(outboundAt(processTable, row));
+        routes->process_outbound.append(outboundAt(processTable, row, 1));
     }
     for (int row = 0; row < domainTable->rowCount(); row++) {
         auto *edit = qobject_cast<QLineEdit *>(domainTable->cellWidget(row, 0));
@@ -323,9 +368,14 @@ void QuickRoutesWidget::saveToStore() {
         if (domain.isEmpty()) {
             continue;
         }
+        auto *methodCombo = qobject_cast<QComboBox *>(domainTable->cellWidget(row, 1));
+        const auto method = methodCombo != nullptr ? methodCombo->currentData().toString()
+                                                   : QStringLiteral("keyword");
         routes->domain_match.append(domain);
-        routes->domain_outbound.append(outboundAt(domainTable, row));
+        routes->domain_method.append(method == "suffix" ? "suffix" : "keyword");
+        routes->domain_outbound.append(outboundAt(domainTable, row, 2));
     }
+    routes->normalize();
 
     Configs::dataStore->routing->Save();
 

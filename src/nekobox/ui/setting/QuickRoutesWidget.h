@@ -31,9 +31,9 @@ private:
     QPushButton *saveButton = nullptr;
 
     QWidget *makeSection(const QString &title, QTableWidget **table, const QString &firstHeader,
-                         bool processSection);
+                         bool processSection, bool domainSection = false);
 
-    static void setupTable(QTableWidget *table, const QString &firstHeader);
+    static void setupTable(QTableWidget *table, const QStringList &headers, int outboundColumn);
 
     static QList<OutboundChoice> collectOutbounds();
 
@@ -41,15 +41,17 @@ private:
 
     QComboBox *makeOutboundCombo(int selectedId) const;
 
+    QComboBox *makeMethodCombo(const QString &method) const;
+
     QWidget *makeProcessEditor(const QString &path);
 
     [[nodiscard]] QString processPathAt(int row) const;
 
-    [[nodiscard]] static int outboundAt(QTableWidget *table, int row);
+    [[nodiscard]] static int outboundAt(QTableWidget *table, int row, int outboundColumn);
 
     void addProcessRow(const QString &path, int outboundId);
 
-    void addDomainRow(const QString &domain, int outboundId);
+    void addDomainRow(const QString &domain, int outboundId, const QString &method = QString());
 
     static void removeSelectedRows(QTableWidget *table);
 

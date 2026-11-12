@@ -5262,6 +5262,37 @@ Request payload was: %2</source>
 <context>
     <name>QuickRoutesWidget</name>
     <message>
+        <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="88" />
+        <source>Method</source>
+        <translation>Метод</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="291" />
+        <source>keyword</source>
+        <translation>по подстроке</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="292" />
+        <source>suffix</source>
+        <translation>по окончанию</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="293" />
+        <source>Matches any domain that contains this text</source>
+        <translation>Совпадает с любым доменом, содержащим этот текст</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="294" />
+        <source>Matches this domain and all of its subdomains</source>
+        <translation>Совпадает с этим доменом и всеми его поддоменами</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="308" />
+        <source>Domain suffix, for example: google.com</source>
+        <translation>Окончание домена, например: google.com</translation>
+    </message>
+
+    <message>
         <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="71" />
         <source>Running processes...</source>
         <translation>Запущенные процессы…</translation>
