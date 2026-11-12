@@ -1,4 +1,5 @@
 #include <nekobox/ui/setting/ProcessPickerDialog.h>
+#include <nekobox/ui/setting/ThemeManager.hpp>
 
 #include <QAbstractItemView>
 #include <QDialogButtonBox>
@@ -153,8 +154,10 @@ ProcessPickerDialog::ProcessPickerDialog(QWidget *parent) : QDialog(parent) {
     table->setAlternatingRowColors(false);
     table->setShowGrid(false);
 
-    const bool dark = palette().color(QPalette::Window).lightness() < 128 ||
-                      palette().color(QPalette::Base).lightness() < 128;
+    const bool dark = themeManager != nullptr
+                          ? ThemeManager::isDarkEffective(themeManager->current_theme)
+                          : (palette().color(QPalette::Window).lightness() < 128 ||
+                             palette().color(QPalette::Base).lightness() < 128);
     table->setStyleSheet(
         dark ? QStringLiteral(
                    "QTableWidget#processPickerTable {"

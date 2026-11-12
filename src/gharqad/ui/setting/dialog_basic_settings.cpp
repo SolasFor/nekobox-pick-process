@@ -325,7 +325,14 @@ DialogBasicSettings::DialogBasicSettings(MainWindow *parent)
     });
 
     //
-    ui->theme->addItems(QStyleFactory::keys());
+    ui->theme->addItem("System");
+    ui->theme->addItem("Modern Dark");
+    ui->theme->addItem("Modern Light");
+    for (const QString &styleKey : QStyleFactory::keys()) {
+        if (ui->theme->findText(styleKey, Qt::MatchFixedString) < 0) {
+            ui->theme->addItem(styleKey);
+        }
+    }
     ui->theme->addItem("Dark");
     ui->theme->addItem("Kawaii");
     ui->theme->addItem("BlackSoft");
@@ -334,7 +341,11 @@ DialogBasicSettings::DialogBasicSettings(MainWindow *parent)
     ui->theme->addItem("LightBlue");
     ui->theme->addItem("FlatGray");
     //
-    ui->theme->setCurrentText(settings->theme);
+    if (settings->theme.isEmpty() || ui->theme->findText(settings->theme, Qt::MatchFixedString) < 0) {
+        ui->theme->setCurrentText("System");
+    } else {
+        ui->theme->setCurrentText(settings->theme);
+    }
     //
     connect(ui->theme, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, [=,this](int index) {
         QString ui_theme_text = ui->theme->currentText();

@@ -401,21 +401,10 @@ void QuickRoutesWidget::applyVisualStyle() {
     }
     applyingStyle = true;
 
-    bool dark = false;
-    if (themeManager != nullptr && !themeManager->current_theme.isEmpty()) {
-        const int mode = ThemeManager::getMode(themeManager->current_theme);
-        if (mode == 1) {
-            dark = true;
-        } else if (mode == 2) {
-            dark = false;
-        } else {
-            dark = palette().color(QPalette::Window).lightness() < 128 ||
-                   palette().color(QPalette::Base).lightness() < 128;
-        }
-    } else {
-        dark = palette().color(QPalette::Window).lightness() < 128 ||
-               palette().color(QPalette::Base).lightness() < 128;
-    }
+    const bool dark = themeManager != nullptr
+                          ? ThemeManager::isDarkEffective(themeManager->current_theme)
+                          : (palette().color(QPalette::Window).lightness() < 128 ||
+                             palette().color(QPalette::Base).lightness() < 128);
 
     const QString qss = dark
         ? QStringLiteral(

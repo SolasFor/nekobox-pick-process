@@ -222,22 +222,196 @@ void MainWindow::changeEventTrigger(bool fontChange){
   this->ui->checkBox_VPN->setFont(font);
   this->ui->system_dns->setFont(font);
 
-  QString stylesheet = "";
-  if (Configs::windowSettings->enable_indicator_borders){
-    QColor c = ui->label_inbound->palette().color(QPalette::WindowText);
-    QString w = QString::number(Configs::windowSettings->indicator_border_width) + "px";
-    QString r = QString::number(Configs::windowSettings->indicator_border_radius) + "px";
-    stylesheet = QString("border: %2 solid %1; border-radius: %3;").arg(c.name(), w, r);
+  const bool dark = ThemeManager::isDarkEffective(Configs::windowSettings->theme);
+  const int radius = qMax(4, Configs::windowSettings->indicator_border_radius > 0
+                                 ? Configs::windowSettings->indicator_border_radius
+                                 : 6);
+  QString staticStatusCss;
+  QString interactiveStatusCss;
+  if (Configs::windowSettings->enable_indicator_borders) {
+    if (dark) {
+      staticStatusCss = QStringLiteral(
+                            "QLabel { background-color: rgba(255, 255, 255, 9);"
+                            " border: 1px solid rgba(255, 255, 255, 24);"
+                            " border-radius: %1px; padding: 5px 10px; }")
+                            .arg(radius);
+      interactiveStatusCss = QStringLiteral(
+                                 "QLabel { background-color: rgba(255, 255, 255, 9);"
+                                 " border: 1px solid rgba(255, 255, 255, 24);"
+                                 " border-radius: %1px; padding: 5px 10px; }"
+                                 "QLabel:hover { background-color: rgba(59, 130, 246, 38);"
+                                 " border: 1px solid rgba(96, 165, 250, 135); }")
+                                 .arg(radius);
+    } else {
+      staticStatusCss = QStringLiteral(
+                            "QLabel { background-color: #ffffff;"
+                            " border: 1px solid #cbd5e1;"
+                            " border-radius: %1px; padding: 5px 10px; }")
+                            .arg(radius);
+      interactiveStatusCss = QStringLiteral(
+                                 "QLabel { background-color: #ffffff;"
+                                 " border: 1px solid #cbd5e1;"
+                                 " border-radius: %1px; padding: 5px 10px; }"
+                                 "QLabel:hover { background-color: #eff6ff;"
+                                 " border: 1px solid #60a5fa; }")
+                                 .arg(radius);
+    }
+  } else {
+    staticStatusCss = QStringLiteral("QLabel { background: transparent; border: none; padding: 4px 8px; }");
+    interactiveStatusCss = staticStatusCss;
   }
-  #ifdef DEBUG_MODE
-  qDebug() << "Indicator borders is " << Configs::windowSettings->enable_indicator_borders;
-  qDebug() << "Border stylesheet is" << stylesheet;
-  #endif
-  ui->label_inbound->setStyleSheet(stylesheet);
-  ui->label_speed->setStyleSheet(stylesheet);
-  ui->label_running->setStyleSheet(stylesheet);
-  ui->toolbox_group->setStyleSheet(
-    "QGroupBox { background: transparent; border: none; }");
+
+  auto applyCssIfChanged = [](QWidget *w, const QString &css) {
+    if (w != nullptr && w->styleSheet() != css) {
+      w->setStyleSheet(css);
+    }
+  };
+
+  applyCssIfChanged(ui->label_speed, staticStatusCss);
+  applyCssIfChanged(ui->label_running, interactiveStatusCss);
+  applyCssIfChanged(ui->label_inbound, interactiveStatusCss);
+
+  for (QToolButton *tb : {ui->toolButton_program, ui->toolButton_server,
+                          ui->toolButton_preferences, ui->toolButton_routing,
+                          ui->toolButton_update}) {
+    applyCssIfChanged(tb, QString());
+  }
+
+  const QString toolboxCss = dark
+      ? QStringLiteral(
+            "QFrame#toolbox_group {"
+            "  background-color: rgba(255, 255, 255, 8);"
+            "  border: 1px solid rgba(255, 255, 255, 22);"
+            "  border-radius: 8px;"
+            "}"
+            "QFrame#toolbox_group QToolButton {"
+            "  background: transparent;"
+            "  border: 1px solid transparent;"
+            "  border-radius: 6px;"
+            "  padding: 4px 10px;"
+            "  color: #eef2f6;"
+            "  font-weight: 500;"
+            "}"
+            "QFrame#toolbox_group QToolButton:hover {"
+            "  background-color: rgba(59, 130, 246, 48);"
+            "  border: 1px solid rgba(96, 165, 250, 135);"
+            "  color: #ffffff;"
+            "}"
+            "QFrame#toolbox_group QToolButton:pressed {"
+            "  background-color: rgba(37, 99, 235, 105);"
+            "  border: 1px solid #60a5fa;"
+            "}"
+            "QFrame#toolbox_group QToolButton::menu-indicator {"
+            "  image: none;"
+            "  width: 0px;"
+            "}")
+      : QStringLiteral(
+            "QFrame#toolbox_group {"
+            "  background-color: #ffffff;"
+            "  border: 1px solid #cbd5e1;"
+            "  border-radius: 8px;"
+            "}"
+            "QFrame#toolbox_group QToolButton {"
+            "  background: transparent;"
+            "  border: 1px solid transparent;"
+            "  border-radius: 6px;"
+            "  padding: 4px 10px;"
+            "  color: #0f172a;"
+            "  font-weight: 500;"
+            "}"
+            "QFrame#toolbox_group QToolButton:hover {"
+            "  background-color: #eff6ff;"
+            "  border: 1px solid #60a5fa;"
+            "  color: #1d4ed8;"
+            "}"
+            "QFrame#toolbox_group QToolButton:pressed {"
+            "  background-color: #dbeafe;"
+            "  border: 1px solid #2563eb;"
+            "}"
+            "QFrame#toolbox_group QToolButton::menu-indicator {"
+            "  image: none;"
+            "  width: 0px;"
+            "}");
+  applyCssIfChanged(ui->toolbox_group, toolboxCss);
+
+  const QString startStopCss = dark
+      ? QStringLiteral(
+            "QToolButton {"
+            "  background-color: rgba(255, 255, 255, 10);"
+            "  border: 1px solid rgba(255, 255, 255, 26);"
+            "  border-radius: 8px;"
+            "  padding: 2px;"
+            "}"
+            "QToolButton:hover {"
+            "  background-color: rgba(59, 130, 246, 48);"
+            "  border: 1px solid #60a5fa;"
+            "}"
+            "QToolButton::menu-indicator { image: none; width: 0px; }")
+      : QStringLiteral(
+            "QToolButton {"
+            "  background-color: #ffffff;"
+            "  border: 1px solid #cbd5e1;"
+            "  border-radius: 8px;"
+            "  padding: 2px;"
+            "}"
+            "QToolButton:hover {"
+            "  background-color: #eff6ff;"
+            "  border: 1px solid #60a5fa;"
+            "}"
+            "QToolButton::menu-indicator { image: none; width: 0px; }");
+  applyCssIfChanged(ui->start_stop_button, startStopCss);
+
+  const QString testBtnCss = dark
+      ? QStringLiteral(
+            "QPushButton {"
+            "  background-color: rgba(37, 99, 235, 200);"
+            "  color: #ffffff;"
+            "  border: 1px solid #60a5fa;"
+            "  border-radius: 6px;"
+            "  padding: 5px 16px;"
+            "  font-weight: 600;"
+            "}"
+            "QPushButton:hover {"
+            "  background-color: rgba(59, 130, 246, 235);"
+            "}"
+            "QPushButton::menu-indicator { image: none; width: 0px; }")
+      : QStringLiteral(
+            "QPushButton {"
+            "  background-color: #2563eb;"
+            "  color: #ffffff;"
+            "  border: 1px solid #1d4ed8;"
+            "  border-radius: 6px;"
+            "  padding: 5px 16px;"
+            "  font-weight: 600;"
+            "}"
+            "QPushButton:hover {"
+            "  background-color: #1d4ed8;"
+            "}"
+            "QPushButton::menu-indicator { image: none; width: 0px; }");
+  applyCssIfChanged(ui->url_test_button, testBtnCss);
+
+  const QString splitterCss = dark
+      ? QStringLiteral(
+            "QSplitter#splitter::handle:vertical {"
+            "  height: 8px;"
+            "  background-color: rgba(255, 255, 255, 14);"
+            "  border-radius: 3px;"
+            "  margin: 1px 36px;"
+            "}"
+            "QSplitter#splitter::handle:vertical:hover {"
+            "  background-color: rgba(96, 165, 250, 175);"
+            "}")
+      : QStringLiteral(
+            "QSplitter#splitter::handle:vertical {"
+            "  height: 8px;"
+            "  background-color: #e2e8f0;"
+            "  border-radius: 3px;"
+            "  margin: 1px 36px;"
+            "}"
+            "QSplitter#splitter::handle:vertical:hover {"
+            "  background-color: #60a5fa;"
+            "}");
+  applyCssIfChanged(ui->splitter, splitterCss);
 }
 
 void MainWindow::changeEvent(QEvent *event) {
@@ -861,19 +1035,8 @@ MainWindow::MainWindow(QWidget *parent)
 
   connect(themeManager, &ThemeManager::themeChanged, this,
           [=, this](const QString &theme) {
-            int mode = ThemeManager::getMode(theme);
-            bool darkMode = false;
-            if (mode == 2) {
-              // light themes
-              darkMode = false;
-            } else if (mode == 1) {
-              // dark themes
-              darkMode = true;
-            } else {
-              darkMode = isDarkMode();
-              // bi-mode themes, follow system preference
-            }
-            updateLogColors(darkMode);
+            updateLogColors(ThemeManager::isDarkEffective(theme));
+            this->changeEventTrigger(false);
           });
 
 //  updateEmojiFont();
@@ -917,7 +1080,7 @@ MainWindow::MainWindow(QWidget *parent)
   connect(qApp->styleHints(), &QStyleHints::colorSchemeChanged, this,
           [=, this](const Qt::ColorScheme &scheme) {
             updateLogColors(scheme == Qt::ColorScheme::Dark);
-            themeManager->ApplyTheme(theme, true);
+            themeManager->ApplyTheme(Configs::windowSettings->theme, true);
           });
 #endif
   connect(ui->data_view, &QTextBrowser::textChanged, [this]() {
@@ -941,16 +1104,44 @@ MainWindow::MainWindow(QWidget *parent)
     }
   });
 
+  if (auto *centralLayout = ui->centralwidget->layout()) {
+    centralLayout->setContentsMargins(8, 8, 8, 8);
+    centralLayout->setSpacing(6);
+  }
+  ui->toolbox_group->layout()->setContentsMargins(4, 3, 4, 3);
+  ui->toolbox_group->layout()->setSpacing(4);
+  for (QWidget *btn : {static_cast<QWidget *>(ui->toolButton_program),
+                       static_cast<QWidget *>(ui->toolButton_server),
+                       static_cast<QWidget *>(ui->toolButton_preferences),
+                       static_cast<QWidget *>(ui->toolButton_routing),
+                       static_cast<QWidget *>(ui->toolButton_update),
+                       static_cast<QWidget *>(ui->start_stop_button),
+                       static_cast<QWidget *>(ui->url_test_button),
+                       static_cast<QWidget *>(ui->label_running),
+                       static_cast<QWidget *>(ui->label_inbound)}) {
+    if (btn != nullptr) {
+      btn->setCursor(Qt::PointingHandCursor);
+    }
+  }
+  ui->start_stop_button->setMinimumSize(38, 38);
+  ui->start_stop_button->setMaximumSize(38, 38);
+  ui->searchBox->setMinimumHeight(32);
+  ui->url_test_button->setMinimumHeight(32);
+
   QWidget *corner = new QWidget(ui->tabWidget);
   QHBoxLayout *layout = new QHBoxLayout(corner);
-  layout->setContentsMargins(0, 0, 0, 0);
-  layout->setSpacing(0);
+  layout->setContentsMargins(4, 0, 2, 2);
+  layout->setSpacing(4);
 
   filterButton = new QToolButton(corner);
   filterButton->setText("🔽");
+  filterButton->setCursor(Qt::PointingHandCursor);
+  filterButton->setMinimumSize(28, 26);
 
   searchButton = new QToolButton(corner);
   searchButton->setText("🔍");
+  searchButton->setCursor(Qt::PointingHandCursor);
+  searchButton->setMinimumSize(28, 26);
 
   logAutoScrollCheckBox =
       new QCheckBox(tr("Auto-scroll log"), ui->stats_widget);
@@ -1275,6 +1466,9 @@ skip_updater_hide:
 */
 
   tableModel->capture(this->ui->proxyListTable);
+  ui->proxyListTable->verticalHeader()->setDefaultSectionSize(32);
+  ui->proxyListTable->horizontalHeader()->setHighlightSections(false);
+  ui->proxyListTable->verticalHeader()->setHighlightSections(false);
 
   connect(ui->proxyListTable, &QTableView::doubleClicked,
         this, &MainWindow::on_proxyListTable_itemDoubleClicked);
@@ -2844,6 +3038,10 @@ void MainWindow::setDownloadReport(const DownloadProgressReport &report,
 void MainWindow::setupConnectionList() {
   ui->connections->horizontalHeader()->setHighlightSections(false);
   ui->connections->setEditTriggers(QAbstractItemView::NoEditTriggers);
+  ui->connections->setSelectionBehavior(QAbstractItemView::SelectRows);
+  ui->connections->setShowGrid(false);
+  ui->connections->setAlternatingRowColors(false);
+  ui->connections->verticalHeader()->setDefaultSectionSize(30);
   ui->connections->horizontalHeader()->setSectionResizeMode(
       0, QHeaderView::Stretch);
   ui->connections->horizontalHeader()->setSectionResizeMode(
