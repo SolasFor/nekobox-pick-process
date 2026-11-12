@@ -5262,6 +5262,31 @@ Request payload was: %2</source>
 <context>
     <name>QuickRoutesWidget</name>
     <message>
+        <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="115" />
+        <source>Application routes match the .exe name. Use Tun mode to capture apps that do not use the system proxy. Saving restarts the core.</source>
+        <translation>Правила приложений сопоставляются по имени .exe. Включите режим TUN для перехвата программ, игнорирующих системный прокси. Сохранение перезапускает ядро.</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="198" />
+        <source>Remove selected rows (Delete)</source>
+        <translation>Удалить выбранные строки (Delete)</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="676" />
+        <source>Remove (%1)</source>
+        <translation>Удалить (%1)</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="810" />
+        <source>No path specified</source>
+        <translation>Путь не указан</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="831" />
+        <source>Click to select this row (Ctrl or Shift for multiple, Delete to remove)</source>
+        <translation>Нажмите, чтобы выбрать строку (Ctrl или Shift — несколько, Delete — удалить)</translation>
+    </message>
+    <message>
         <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="88" />
         <source>Method</source>
         <translation>Метод</translation>

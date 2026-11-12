@@ -1,12 +1,16 @@
 #pragma once
 
 #include <QDialog>
+#include <QFileIconProvider>
+#include <QHash>
+#include <QIcon>
 #include <QList>
 #include <QString>
 #include <QStringList>
 
 QT_BEGIN_NAMESPACE
 class QLineEdit;
+class QPushButton;
 class QTableWidget;
 QT_END_NAMESPACE
 
@@ -32,8 +36,13 @@ private:
     void reload();
     void applyFilter(const QString &text);
     void activateCurrentRow();
+    void updateAcceptState();
+    QIcon iconForPath(const QString &path);
 
     QLineEdit *filterEdit = nullptr;
     QTableWidget *table = nullptr;
+    QPushButton *okButton = nullptr;
+    QFileIconProvider iconProvider;
+    QHash<QString, QIcon> iconCache;
     QList<Entry> entries;
 };
