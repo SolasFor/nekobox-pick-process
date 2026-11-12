@@ -5262,6 +5262,17 @@ Request payload was: %2</source>
 <context>
     <name>QuickRoutesWidget</name>
     <message>
+        <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="71" />
+        <source>Running processes...</source>
+        <translation>Запущенные процессы…</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="73" />
+        <source>Pick programs that are already running instead of browsing for an .exe</source>
+        <translation>Выбрать уже запущенные программы вместо поиска .exe</translation>
+    </message>
+
+    <message>
         <location filename="../../src/gharqad/ui/setting/QuickRoutesWidget.cpp" line="33" />
         <source>Applications</source>
         <translation>Приложения</translation>
@@ -5720,6 +5731,44 @@ Request payload was: %2</source>
         <location filename="../../src/nekobox/ui/security/delete_or_edit_users.ui" line="14" />
         <source>Form</source>
         <translation type="unfinished">Форма</translation>
+    </message>
+</context>
+<context>
+    <name>ProcessPickerDialog</name>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/ProcessPickerDialog.cpp" line="110" />
+        <source>Running applications</source>
+        <translation>Запущенные приложения</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/ProcessPickerDialog.cpp" line="117" />
+        <source>Filter by name or path</source>
+        <translation>Фильтр по имени или пути</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/ProcessPickerDialog.cpp" line="120" />
+        <source>Refresh</source>
+        <translation>Обновить</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/ProcessPickerDialog.cpp" line="121" />
+        <source>Read the process list again</source>
+        <translation>Прочитать список процессов заново</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/ProcessPickerDialog.cpp" line="125" />
+        <source>Select one or more programs. Double-click adds a single one.</source>
+        <translation>Выберите одну или несколько программ. Двойной щелчок добавляет одну.</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/ProcessPickerDialog.cpp" line="130" />
+        <source>Application</source>
+        <translation>Приложение</translation>
+    </message>
+    <message>
+        <location filename="../../src/gharqad/ui/setting/ProcessPickerDialog.cpp" line="130" />
+        <source>Path</source>
+        <translation>Путь</translation>
     </message>
 </context>
 </TS>
